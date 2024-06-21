@@ -1,3 +1,5 @@
+import random
+
 # Scrapy settings for bookscraper project
 #
 # For simplicity, this file contains only settings considered important or
@@ -14,10 +16,16 @@ NEWSPIDER_MODULE = "bookscraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "bookscraper (+http://www.yourdomain.com)"
+
+USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0'
+
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
+
+DOWNLOAD_DELAY = random.uniform(0.5, 1)
+RANDOMIZE_DOWNLOAD_DELAY = True
+
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -62,9 +70,11 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "bookscraper.pipelines.BookscraperPipeline": 300,
-#}
+ITEM_PIPELINES = {
+    "bookscraper.pipelines.DatabasePipeline": 200,
+    "bookscraper.pipelines.BookscraperPipeline": 100,
+
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
