@@ -8,6 +8,11 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 scrapy = "^2.11.2"
+strip = "^0.0.1.dev14"
+dateparser = "^1.2.0"
+datetime = "^5.5"
+sqlalchemy = "^2.0.31"
+psycopg2-binary = "^2.9.9"
 
 
 [build-system]

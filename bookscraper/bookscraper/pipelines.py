@@ -6,9 +6,9 @@
 
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
-import sqlite3
+import sqlalchemy, psycopg2
 import re, dateparser, datetime
-
+from models import Films
 
 ###########################################################################################################################################################
 ###########################################################################################################################################################
@@ -22,63 +22,55 @@ class DatabasePipelineFilm :
     def open_spider(self, spider):
         # Se connecter à la base de données
         # Créer la table si elle n'existe pas
-        self.connection = sqlite3.connect('films.db')
-        self.cursor = self.connection.cursor()
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS films(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titre TEXT,
-                scorepresse REAL,
-                scorespectateurs REAL,
-                genre TEXT,
-                annee TEXT,
-                duree INTEGER,
-                description TEXT,
-                acteurs TEXT,
-                realisateur TEXT,
-                pays TEXT,
-                boxofficefr INTEGER
-            )
-        ''')
-        self.connection.commit()
+       
+       ##### créer une connexion à la bdd postgre
+        self.connection = psycopg2.connect(
+            host="localhost", #à adapter
+            database="film_scraping", #à adapter
+            user="root", #à adapter
+            password="123456") #à adapter
+
+        self.curr = self.connection.cursor()
 
 
+    def process_item(self, item, spider):
+        # Insérer les données dans la base de données
+        film=Films(titre=item['titre'], )
+
+        # self.cursor.execute('''
+        #     INSERT INTO films(
+        #         titre,
+        #         scorepresse,
+        #         scorespectateurs,
+        #         genre,
+        #         annee,
+        #         duree,
+        #         description,
+        #         acteurs,
+        #         realisateur,
+        #         pays,
+        #         boxofficefr)
+        #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        # ''', 
+        # (item['titre'],
+        # item['scorepresse'],
+        # item['scorespectateurs'],
+        # item['genre'],
+        # item['annee'],
+        # item['duree'],
+        # item['description'],
+        # item['acteurs'],
+        # item['realisateur'],
+        # item['pays'],
+        # item['boxofficefr']))
+        # self.connection.commit()
+        # return item
+    
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
         self.connection.commit()
         self.connection.close()
 
-    def process_item(self, item, spider):
-        # Insérer les données dans la base de données
-        self.cursor.execute('''
-            INSERT INTO films(
-                titre,
-                scorepresse,
-                scorespectateurs,
-                genre,
-                annee,
-                duree,
-                description,
-                acteurs,
-                realisateur,
-                pays,
-                boxofficefr)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', 
-        (item['titre'],
-        item['scorepresse'],
-        item['scorespectateurs'],
-        item['genre'],
-        item['annee'],
-        item['duree'],
-        item['description'],
-        item['acteurs'],
-        item['realisateur'],
-        item['pays'],
-        item['boxofficefr']))
-        self.connection.commit()
-        return item
-    
 class BookscraperPipelineFilm:
         
         def process_item(self, item, spider): #méthode qui fait appel à une autre méthode
@@ -157,6 +149,7 @@ class BookscraperPipelineFilm:
             return item
         
 
+    
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 
