@@ -87,7 +87,7 @@ class PaysLinkFilms(Base):
     id_film = Column(Integer, ForeignKey('films.id'), autoincrement=True)
     id_pays = Column(Integer, ForeignKey('pays.id'), autoincrement=True)
 
-class PayssLinkSeries(Base):
+class PaysLinkSeries(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_serie = Column(Integer, ForeignKey('series.id'), autoincrement=True)
     id_pays = Column(Integer, ForeignKey('pays.id'), autoincrement=True)

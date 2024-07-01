@@ -8,7 +8,8 @@
 from itemadapter import ItemAdapter
 import sqlalchemy, psycopg2
 import re, dateparser, datetime
-from models import Films
+from models import Films, Series, Realisateurs, RealisateursLinkFilms, RealisateursLinkSeries, Acteurs, ActeursLinkFilms
+from models import ActeursLinkSeries, Genre, GenreLinkFilms, GenreLinkSeries, Pays, PaysLinkFilms, PaysLinkSeries
 
 ###########################################################################################################################################################
 ###########################################################################################################################################################
@@ -27,44 +28,94 @@ class DatabasePipelineFilm :
         self.connection = psycopg2.connect(
             host="localhost", #à adapter
             database="film_scraping", #à adapter
-            user="root", #à adapter
+            user="pbo", #à adapter
             password="123456") #à adapter
 
         self.curr = self.connection.cursor()
 
 
     def process_item(self, item, spider):
-        # Insérer les données dans la base de données
-        film=Films(titre=item['titre'], )
+        # Insérer les données dans la base de données :
+        # - règle pour vérifier l'existence de l'entité dans la table correspondante
+        # - ajout de l'entité
 
-        # self.cursor.execute('''
-        #     INSERT INTO films(
-        #         titre,
-        #         scorepresse,
-        #         scorespectateurs,
-        #         genre,
-        #         annee,
-        #         duree,
-        #         description,
-        #         acteurs,
-        #         realisateur,
-        #         pays,
-        #         boxofficefr)
-        #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        # ''', 
-        # (item['titre'],
-        # item['scorepresse'],
-        # item['scorespectateurs'],
-        # item['genre'],
-        # item['annee'],
-        # item['duree'],
-        # item['description'],
-        # item['acteurs'],
-        # item['realisateur'],
-        # item['pays'],
-        # item['boxofficefr']))
-        # self.connection.commit()
-        # return item
+        #table films
+        existing_film = self.curr.query(Films).filter_by(titre=item['titre'], annee=item['annee']).first()
+        if existing_film :
+            pass
+        else : 
+            film=Films(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], genre = item['genre'], annee = item['annee'], duree = item['duree'], description = item['description'], pays = item['pays'], boxeofficefr = item['boxofficefr'])
+            self.curr.add(film)
+            self.curr.commit()
+
+        #table realisateurs
+        for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
+            existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
+            if existing_real : #s'il existe dans la base
+                realisateur=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
+            else : 
+                realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
+                self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                self.curr.commit()
+
+        #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par film)
+            realisateurslinkfilms=RealisateursLinkFilms(film.id, realisateur.id)
+            self.curr.add(realisateurslinkfilms)
+            self.curr.commit()
+
+
+######################################################## Reprendre ci dessous en s'inspirant de réalisateurs ci dessus
+
+        #table acteurs
+        for scrap_acteur in item['acteurs']:
+            existing_act = self.curr.query(Acteurs).filter_by(realisateur=scrap_realisateur).first()
+            if existing_act :
+                acteur=existing_act
+            else : ###################################
+                realisateur=Realisateurs(realisateur=scrap_realisateur)
+                self.curr.add(realisateur) 
+                self.curr.commit()
+
+
+        # listeacteurs=Acteurs(acteurs=item['acteurs'])
+        # existing_act = self.curr.query(Acteurs).filter_by(acteur=item['acteur']).first()
+        # for a in listeacteurs :
+        #     acteur = a
+        #     if existing_act :
+        #         pass
+        #     else : 
+        #         self.curr.add(acteur) 
+        # self.curr.commit()
+
+        # self.curr.add(acteur)
+        # self.curr.commit()
+
+        #table acteurslinkfilms
+        acteurslinkfilms=RealisateursLinkFilms(film.id, realisateur.id)
+        self.curr.add(acteurslinkfilms)
+        self.curr.commit()
+
+        #table pays
+        pays=Pays(pays=item['pays'])
+        self.curr.add(pays)
+        self.curr.commit()
+
+        #table payslinkfilms
+        payslinkfilms=PaysLinkFilms(film.id, pays.id)
+        self.curr.add(payslinkfilms)
+        self.curr.commit()
+
+        #table genre
+        genre=Genre(acteurs=item['genre'])
+        self.curr.add(genre)
+        self.curr.commit()
+
+        #table genrelinkfilms
+        genrelinkfilms=GenreLinkFilms(film.id, genre.id)
+        self.curr.add(genrelinkfilms)
+        self.curr.commit()
+
+        ## est-ce que les realisateurs/acteurs/genre/pays qui existent déjà seront générés en double ?
     
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
@@ -164,65 +215,74 @@ class DatabasePipelineSeries :
     def open_spider(self, spider):
         # Se connecter à la base de données
         # Créer la table si elle n'existe pas
-        self.connection = sqlite3.connect('series.db')
-        self.cursor = self.connection.cursor()
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS series(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titre TEXT,
-                scorepresse REAL,
-                scorespectateurs REAL,
-                genre TEXT,
-                annee TEXT,
-                duree INTEGER,
-                description TEXT,
-                acteurs TEXT,
-                realisateur TEXT,
-                saisons INTEGER,
-                episodes INTEGER,
-                pays TEXT
-            )
-        ''')
-        self.connection.commit()
+       
+       ##### créer une connexion à la bdd postgre
+        self.connection = psycopg2.connect(
+            host="localhost", #à adapter
+            database="film_scraping", #à adapter
+            user="pbo", #à adapter
+            password="123456") #à adapter
+
+        self.curr = self.connection.cursor()
 
 
+    def process_item(self, item, spider):
+        # Insérer les données dans la base de données
+
+        #table series
+        serie=Series(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], genre = item['genre'], annee = item['annee'], duree = item['duree'], description = item['description'], pays = item['pays'], saisons = item['saisons'], episodes = item['episodes'])
+        self.curr.add(serie)
+        self.curr.commit()
+
+        #table realisateurs
+        listerealisateurs=Realisateurs(realisateur=item['realisateurs'])
+        for real in listerealisateurs:
+            realisateur = real
+            self.curr.add(realisateur)
+        self.curr.commit()
+
+        #table realisateurslinkseries
+        realisateurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
+        self.curr.add(realisateurslinkseries)
+        self.curr.commit()
+
+        #table acteurs
+        acteurs=Acteurs(acteurs=item['acteurs'])
+        self.curr.add(acteurs)
+        self.curr.commit()
+
+        #table acteurslinkfilms
+        acteurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
+        self.curr.add(acteurslinkseries)
+        self.curr.commit()
+
+        #table pays
+        pays=Pays(pays=item['pays'])
+        self.curr.add(pays)
+        self.curr.commit()
+
+        #table payslinkfilms
+        payslinkseries=PaysLinkSeries(serie.id, pays.id)
+        self.curr.add(payslinkseries)
+        self.curr.commit()
+
+        #table genre
+        genre=Genre(acteurs=item['genre'])
+        self.curr.add(genre)
+        self.curr.commit()
+
+        #table genrelinkfilms
+        genrelinkserie=GenreLinkSeries(serie.id, genre.id)
+        self.curr.add(genrelinkserie)
+        self.curr.commit()
+
+        ## est-ce que les realisateurs/acteurs/genre/pays qui existent déjà seront générés en double ?
+    
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
         self.connection.commit()
         self.connection.close()
 
-    def process_item(self, item, spider):
-        # Insérer les données dans la base de données
-        self.cursor.execute('''
-            INSERT INTO series(
-                titre,
-                scorepresse,
-                scorespectateurs,
-                genre,
-                annee,
-                duree,
-                description,
-                acteurs,
-                realisateur,
-                saisons,
-                episodes,
-                pays)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', 
-        (item['titre'],
-        item['scorepresse'],
-        item['scorespectateurs'],
-        item['genre'],
-        item['annee'],
-        item['duree'],
-        item['description'],
-        item['acteurs'],
-        item['realisateur'],
-        item['saisons'],
-        item['episodes'],
-        item['pays']))
-        self.connection.commit()
-        return item
     
 class BookscraperPipelineSeries:
         
