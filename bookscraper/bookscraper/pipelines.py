@@ -44,78 +44,117 @@ class DatabasePipelineFilm :
         if existing_film :
             pass
         else : 
-            film=Films(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], genre = item['genre'], annee = item['annee'], duree = item['duree'], description = item['description'], pays = item['pays'], boxeofficefr = item['boxofficefr'])
+            film=Films(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], annee = item['annee'], duree = item['duree'], description = item['description'], boxeofficefr = item['boxofficefr'])
             self.curr.add(film)
             self.curr.commit()
-
+        
         #table realisateurs
-        for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
+        if isintance(item['realisateurs'], list): # vérifier que l'élement est une liste
+            for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
+                existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
+                if existing_real : #s'il existe dans la base
+                    realisateur=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
+                else : 
+                    realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
+                    self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                    self.curr.commit()
+                #table realisateurslinkfilms (le faire pour chaque realisateur quand il y en a plusieurs par film)
+                realisateurslinkfilms=RealisateursLinkFilms(film.id, realisateur.id)
+                self.curr.add(realisateurslinkfilms)
+                self.curr.commit()
+        else :
             existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
             if existing_real : #s'il existe dans la base
                 realisateur=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
-            else : 
+            else: 
                 realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
                 self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
                 self.curr.commit()
-
-        #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par film)
+            #table realisateurslinkfilms (le faire pour chaque realisateur quand il y en a plusieurs par film)
             realisateurslinkfilms=RealisateursLinkFilms(film.id, realisateur.id)
             self.curr.add(realisateurslinkfilms)
             self.curr.commit()
-
-
-######################################################## Reprendre ci dessous en s'inspirant de réalisateurs ci dessus
-
-        #table acteurs
-        for scrap_acteur in item['acteurs']:
-            existing_act = self.curr.query(Acteurs).filter_by(realisateur=scrap_realisateur).first()
-            if existing_act :
-                acteur=existing_act
-            else : ###################################
-                realisateur=Realisateurs(realisateur=scrap_realisateur)
-                self.curr.add(realisateur) 
+    
+      #table acteurs
+        if isintance(item['acteurs'], list): # vérifier que l'élement est une liste
+            for scrap_acteur in item['acteurs']: #pour chaque élément de la liste acteurs résultant du scrapping
+                existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+                if existing_act : #s'il existe
+                    acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+                else : #s'il n'existe pas
+                    acteur=Acteurs(acteur=scrap_acteur) #on le stocke en base dans la table acteurs
+                    self.curr.add(acteur) #ajouter l'acteur à la session
+                    self.curr.commit() #commiter la session
+            #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par film)
+                acteurslinkfilms=ActeursLinkFilms(film.id, acteur.id)
+                self.curr.add(acteurslinkfilms)
                 self.curr.commit()
-
-
-        # listeacteurs=Acteurs(acteurs=item['acteurs'])
-        # existing_act = self.curr.query(Acteurs).filter_by(acteur=item['acteur']).first()
-        # for a in listeacteurs :
-        #     acteur = a
-        #     if existing_act :
-        #         pass
-        #     else : 
-        #         self.curr.add(acteur) 
-        # self.curr.commit()
-
-        # self.curr.add(acteur)
-        # self.curr.commit()
-
-        #table acteurslinkfilms
-        acteurslinkfilms=RealisateursLinkFilms(film.id, realisateur.id)
-        self.curr.add(acteurslinkfilms)
-        self.curr.commit()
+        else:
+            existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+            if existing_act : #s'il existe
+                acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+            else : 
+                acteur=Acteur(acteur=item['acteurs'])
+                self.curr.add(acteur)
+                self.curr.commit()
+            #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par film)
+            acteurslinkfilms=ActeursLinkFilms(film.id, acteur.id)
+            self.curr.add(acteurslinkfilms)
+            self.curr.commit()
 
         #table pays
-        pays=Pays(pays=item['pays'])
-        self.curr.add(pays)
-        self.curr.commit()
-
-        #table payslinkfilms
-        payslinkfilms=PaysLinkFilms(film.id, pays.id)
-        self.curr.add(payslinkfilms)
-        self.curr.commit()
+        if isintance(item['pays'], list): #vérifier que mon élément est une liste
+            for scrap_pays in item['pays']: #pour chaque élément de la liste pays
+                existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
+                if existing_pays : #s'il existe
+                    pays=existing_pays #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (table d'association)
+                else : #s'il n'existe pas
+                    pays=Pays(pays=scrap_pays) #on le stocke en base
+                    self.curr.add(pays) #ajouter le pays à la session
+                    self.curr.commit() #commiter la session
+            #table payslinkfilms (le faire pour chaque pays quand il y en a plusieurs par film)
+            payslinkfilms=PaysLinkFilms(film.id, pays.id)
+            self.curr.add(payslinkfilms)
+            self.curr.commit()
+        else:
+            existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
+            if existing_pays : #s'il existe
+                pays=existing_pays #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (table d'association)
+            else : 
+                pays=Pays(pays=item['pays'])
+                self.curr.add(pays)
+                self.curr.commit()
+            #table payslinkfilms (le faire pour chaque pays quand il y en a plusieurs par film)
+            payslinkfilms=PaysLinkFilms(film.id, pays.id)
+            self.curr.add(payslinkfilms)
+            self.curr.commit()
 
         #table genre
-        genre=Genre(acteurs=item['genre'])
-        self.curr.add(genre)
-        self.curr.commit()
-
-        #table genrelinkfilms
-        genrelinkfilms=GenreLinkFilms(film.id, genre.id)
-        self.curr.add(genrelinkfilms)
-        self.curr.commit()
-
-        ## est-ce que les realisateurs/acteurs/genre/pays qui existent déjà seront générés en double ?
+        if isintance(item['genre'], list): #vérifier que mon élément est une liste
+            for scrap_genre in item['genre']: #pour chaque élément de la liste genre
+                existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
+                if existing_genre : #s'il existe
+                    genre=existing_genre #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (pour la table d'association)
+                else : #s'il n'existe pas
+                    genre=Genre(genre=scrap_genre) #on le stocke en base dans sa table
+                    self.curr.add(genre) #ajouter le genre à la session
+                    self.curr.commit() #commiter la session
+            #table genrelinkfilms (le faire pour chaque genre quand il y en a plusieurs par film)
+            genrelinkfilms=GenreLinkFilms(film.id, genre.id)
+            self.curr.add(genrelinkfilms)
+            self.curr.commit()
+        else:
+            existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
+            if existing_genre : #s'il existe
+                genre=existing_genre #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (pour la table d'association)
+            else :     
+                genre=Genre(pays=item['genre'])
+                self.curr.add(genre)
+                self.curr.commit()
+            #table genrelinkfilms (le faire pour chaque genre quand il y en a plusieurs par film)
+            genrelinkfilms=GenreLinkFilms(film.id, genre.id)
+            self.curr.add(genrelinkfilms)
+            self.curr.commit()
     
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
@@ -230,53 +269,119 @@ class DatabasePipelineSeries :
         # Insérer les données dans la base de données
 
         #table series
-        serie=Series(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], genre = item['genre'], annee = item['annee'], duree = item['duree'], description = item['description'], pays = item['pays'], saisons = item['saisons'], episodes = item['episodes'])
+        serie=Series(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], annee = item['annee'], duree = item['duree'], description = item['description'], saisons = item['saisons'], episodes = item['episodes'])
         self.curr.add(serie)
         self.curr.commit()
 
-        #table realisateurs
-        listerealisateurs=Realisateurs(realisateur=item['realisateurs'])
-        for real in listerealisateurs:
-            realisateur = real
-            self.curr.add(realisateur)
-        self.curr.commit()
+       #table realisateurs
+        if isintance(item['realisateurs'], list): # vérifier que l'élement est une liste
+            for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
+                existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
+                if existing_real : #s'il existe dans la base
+                    realisateur=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
+                else : 
+                    realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
+                    self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                    self.curr.commit()
+                #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
+                realisateurslinkseries=RealisateursLinkSeries(series.id, realisateur.id)
+                self.curr.add(realisateurslinkseries)
+                self.curr.commit() 
+        else:
+            existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #on teste si l'acteur existe en base
+            if existing_real : #s'il existe
+                realisateur=existing_real #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+            else : #s'il n'existe pas
+                realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
+                self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                self.curr.commit()
+            #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
+            realisateurslinkseries=RealisateursLinkSeries(series.id, realisateur.id)
+            self.curr.add(realisateurslinkseries)
+            self.curr.commit()
 
-        #table realisateurslinkseries
-        realisateurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
-        self.curr.add(realisateurslinkseries)
-        self.curr.commit()
 
         #table acteurs
-        acteurs=Acteurs(acteurs=item['acteurs'])
-        self.curr.add(acteurs)
-        self.curr.commit()
-
-        #table acteurslinkfilms
-        acteurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
-        self.curr.add(acteurslinkseries)
-        self.curr.commit()
+        if isintance(item['acteurs'], list): # vérifier que l'élement est une liste
+            for scrap_acteur in item['acteurs']: #pour chaque élément de la liste acteurs résultant du scrapping
+                existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+                if existing_act : #s'il existe
+                    acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+                else : #s'il n'existe pas
+                    acteur=Acteurs(acteur=scrap_acteur) #on le stocke en base dans la table acteurs
+                    self.curr.add(acteur) #ajouter l'acteur à la session
+                    self.curr.commit() #commiter la session
+            #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
+                acteurslinkseries=ActeursLinkSeries(serie.id, acteur.id)
+                self.curr.add(acteurslinkseries)
+                self.curr.commit()
+        else:
+            existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+            if existing_act : #s'il existe
+                acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+            else : #s'il n'existe pas
+                acteur=Acteur(acteur=item['acteurs'])
+                self.curr.add(acteur)
+                self.curr.commit()
+            #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
+            acteurslinkseries=ActeursLinkSeries(serie.id, acteur.id)
+            self.curr.add(acteurslinkseries)
+            self.curr.commit()
 
         #table pays
-        pays=Pays(pays=item['pays'])
-        self.curr.add(pays)
-        self.curr.commit()
-
-        #table payslinkfilms
-        payslinkseries=PaysLinkSeries(serie.id, pays.id)
-        self.curr.add(payslinkseries)
-        self.curr.commit()
+        if isintance(item['pays'], list): #vérifier que mon élément est une liste
+            for scrap_pays in item['pays']: #pour chaque élément de la liste pays
+                existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
+                if existing_pays : #s'il existe
+                    pays=existing_pays #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (table d'association)
+                else : #s'il n'existe pas
+                    pays=Pays(pays=scrap_pays) #on le stocke en base
+                    self.curr.add(pays) #ajouter le pays à la session
+                    self.curr.commit() #commiter la session
+                #table acteurslinkfilms (le faire pour chaque pays quand il y en a plusieurs par serie)
+                payslinkseries=PaysLinkSeries(serie.id, pays.id)
+                self.curr.add(payslinkseries)
+                self.curr.commit()
+        else:
+            existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
+            if existing_pays : #s'il existe
+                pays=existing_pays
+            else:
+                pays=Pays(pays=item['pays'])
+                self.curr.add(pays)
+                self.curr.commit()
+            #table acteurslinkseries (le faire pour chaque pays quand il y en a plusieurs par serie)
+            payslinkseries=PaysLinkSeries(serie.id, pays.id)
+            self.curr.add(payslinkseries)
+            self.curr.commit()
 
         #table genre
-        genre=Genre(acteurs=item['genre'])
-        self.curr.add(genre)
-        self.curr.commit()
+        if isintance(item['genre'], list): #vérifier que mon élément est une liste
+            for scrap_genre in item['genre']: #pour chaque élément de la liste genre
+                existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
+                if existing_genre : #s'il existe
+                    genre=existing_genre #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (pour la table d'association)
+                else : #s'il n'existe pas
+                    genre=Genre(genre=scrap_genre) #on le stocke en base dans sa table
+                    self.curr.add(genre) #ajouter le genre à la session
+                    self.curr.commit() #commiter la session
+            #table genrelinkfilms (le faire pour chaque genre quand il y en a plusieurs par serie)
+            genrelinkseries=GenreLinkSeries(serie.id, genre.id)
+            self.curr.add(genrelinkseries)
+            self.curr.commit()
+        else:
+            existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
+            if existing_genre : #s'il existe
+                genre=existing_genre
+            else :
+                genre=Genre(genre=scrap_genre) #on le stocke en base dans sa table
+                self.curr.add(genre) #ajouter le genre à la session
+                self.curr.commit() #commiter la session
+            #table genrelinkseries (le faire pour chaque genre quand il y en a plusieurs par serie)
+            genrelinkseries=GenreLinkSeries(serie.id, genre.id)
+            self.curr.add(genrelinkseries)
+            self.curr.commit()
 
-        #table genrelinkfilms
-        genrelinkserie=GenreLinkSeries(serie.id, genre.id)
-        self.curr.add(genrelinkserie)
-        self.curr.commit()
-
-        ## est-ce que les realisateurs/acteurs/genre/pays qui existent déjà seront générés en double ?
     
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
