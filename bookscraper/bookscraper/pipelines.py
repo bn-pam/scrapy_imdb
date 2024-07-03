@@ -26,10 +26,10 @@ class DatabasePipelineFilm :
        
        ##### créer une connexion à la bdd postgre
         self.connection = psycopg2.connect(
-            host="localhost", #à adapter
-            database="film_scraping", #à adapter
+            host="pbo.postgres.database.azure.com:5432", #à adapter
+            database="scrapy_imdb", #à adapter
             user="pbo", #à adapter
-            password="123456") #à adapter
+            password="") #à adapter
 
         self.curr = self.connection.cursor()
 
@@ -49,7 +49,7 @@ class DatabasePipelineFilm :
             self.curr.commit()
         
         #table realisateurs
-        if isintance(item['realisateurs'], list): # vérifier que l'élement est une liste
+        if isinstance(item['realisateurs'], list): # vérifier que l'élement est une liste
             for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
                 existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
                 if existing_real : #s'il existe dans la base
@@ -76,7 +76,7 @@ class DatabasePipelineFilm :
             self.curr.commit()
     
       #table acteurs
-        if isintance(item['acteurs'], list): # vérifier que l'élement est une liste
+        if isinstance(item['acteurs'], list): # vérifier que l'élement est une liste
             for scrap_acteur in item['acteurs']: #pour chaque élément de la liste acteurs résultant du scrapping
                 existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
                 if existing_act : #s'il existe
@@ -103,7 +103,7 @@ class DatabasePipelineFilm :
             self.curr.commit()
 
         #table pays
-        if isintance(item['pays'], list): #vérifier que mon élément est une liste
+        if isinstance(item['pays'], list): #vérifier que mon élément est une liste
             for scrap_pays in item['pays']: #pour chaque élément de la liste pays
                 existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
                 if existing_pays : #s'il existe
@@ -130,7 +130,7 @@ class DatabasePipelineFilm :
             self.curr.commit()
 
         #table genre
-        if isintance(item['genre'], list): #vérifier que mon élément est une liste
+        if isinstance(item['genre'], list): #vérifier que mon élément est une liste
             for scrap_genre in item['genre']: #pour chaque élément de la liste genre
                 existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
                 if existing_genre : #s'il existe
@@ -274,7 +274,7 @@ class DatabasePipelineSeries :
         self.curr.commit()
 
        #table realisateurs
-        if isintance(item['realisateurs'], list): # vérifier que l'élement est une liste
+        if isinstance(item['realisateurs'], list): # vérifier que l'élement est une liste
             for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
                 existing_real = self.curr.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #le réalisateur existe dans cette liste
                 if existing_real : #s'il existe dans la base
@@ -284,7 +284,7 @@ class DatabasePipelineSeries :
                     self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
                     self.curr.commit()
                 #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
-                realisateurslinkseries=RealisateursLinkSeries(series.id, realisateur.id)
+                realisateurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
                 self.curr.add(realisateurslinkseries)
                 self.curr.commit() 
         else:
@@ -296,13 +296,13 @@ class DatabasePipelineSeries :
                 self.curr.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
                 self.curr.commit()
             #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
-            realisateurslinkseries=RealisateursLinkSeries(series.id, realisateur.id)
+            realisateurslinkseries=RealisateursLinkSeries(serie.id, realisateur.id)
             self.curr.add(realisateurslinkseries)
             self.curr.commit()
 
 
         #table acteurs
-        if isintance(item['acteurs'], list): # vérifier que l'élement est une liste
+        if isinstance(item['acteurs'], list): # vérifier que l'élement est une liste
             for scrap_acteur in item['acteurs']: #pour chaque élément de la liste acteurs résultant du scrapping
                 existing_act = self.curr.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
                 if existing_act : #s'il existe
@@ -320,7 +320,7 @@ class DatabasePipelineSeries :
             if existing_act : #s'il existe
                 acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
             else : #s'il n'existe pas
-                acteur=Acteur(acteur=item['acteurs'])
+                acteur=Acteurs(acteur=item['acteurs'])
                 self.curr.add(acteur)
                 self.curr.commit()
             #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
@@ -329,7 +329,7 @@ class DatabasePipelineSeries :
             self.curr.commit()
 
         #table pays
-        if isintance(item['pays'], list): #vérifier que mon élément est une liste
+        if isinstance(item['pays'], list): #vérifier que mon élément est une liste
             for scrap_pays in item['pays']: #pour chaque élément de la liste pays
                 existing_pays = self.curr.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
                 if existing_pays : #s'il existe
@@ -356,7 +356,7 @@ class DatabasePipelineSeries :
             self.curr.commit()
 
         #table genre
-        if isintance(item['genre'], list): #vérifier que mon élément est une liste
+        if isinstance(item['genre'], list): #vérifier que mon élément est une liste
             for scrap_genre in item['genre']: #pour chaque élément de la liste genre
                 existing_genre = self.curr.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
                 if existing_genre : #s'il existe
