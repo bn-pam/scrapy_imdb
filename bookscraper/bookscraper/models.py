@@ -127,7 +127,7 @@ class GenreLinkFilms(Base):
     __tablename__ = 'genrelinkfilms'
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_film = Column(Integer, ForeignKey('films.id'), autoincrement=True)
-    id_pays = Column(Integer, ForeignKey('genre.id'), autoincrement=True)
+    id_genre = Column(Integer, ForeignKey('genre.id'), autoincrement=True)
     # films = relationship('Films', back_populates='genre_links')
     # genres = relationship('Genre', back_populates='film_links')
 

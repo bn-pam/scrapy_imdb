@@ -149,11 +149,12 @@ class DatabasePipelineFilm :
             self.session.add(genrelinkfilms)
             self.session.commit()
         else:
+            scrap_genre=item['genre']
             existing_genre = self.session.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
             if existing_genre : #s'il existe
                 genre=existing_genre #on le stocke dans une variable pour pouvoir le réutiliser dans notre code (pour la table d'association)
             else :     
-                genre=Genre(pays=item['genre'])
+                genre=Genre(genre=scrap_genre)
                 self.session.add(genre)
                 self.session.commit()
             #table genrelinkfilms (le faire pour chaque genre quand il y en a plusieurs par film)
@@ -247,31 +248,24 @@ class BookscraperPipelineFilm:
         def cleaned_scorespectateurs(self, item) : 
             adapter = ItemAdapter(item)
             scorespectateurs_raw = adapter.get('scorespectateurs')
-            if scorespectateurs_raw is None:
+            if scorespectateurs_raw is not None:
+                scorespectateurs_cleaned = scorespectateurs_raw.replace(",",".")
+            else : 
                 scorespectateurs_cleaned = None
-            else :
-                if isinstance(scorespectateurs_raw, float):
-                    scorespectateurs_cleaned = scorespectateurs_raw.strip().replace(",",".")
-                else : 
-                   scorespectateurs_cleaned = None
             adapter['scorespectateurs'] = scorespectateurs_cleaned
             return item
         
         def cleaned_scorepresse(self, item) : 
             adapter = ItemAdapter(item)
             scorepresse_raw = adapter.get('scorepresse')
-            if scorepresse_raw is None:
+            if scorepresse_raw is not None:
+                scorepresse_cleaned = scorepresse_raw.replace(",",".")
+            else : 
                 scorepresse_cleaned = None
-            else :
-                if isinstance(scorepresse_raw, float):
-                    scorepresse_cleaned = scorepresse_raw.strip().replace(",",".")
-                else : 
-                    scorepresse_cleaned = None
             adapter['scorepresse'] = scorepresse_cleaned
-            return item        
+            return item  
         
 
-    
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 
@@ -280,20 +274,6 @@ class BookscraperPipelineFilm:
 ###########################################################################################################################################################
 ###########################################################################################################################################################
 
-
-    def process_item(self, item, spider):
-        # Insérer les données dans la base de données :
-        # - règle pour vérifier l'existence de l'entité dans la table correspondante
-        # - ajout de l'entité
-
-        #table films
-        # try : 
-        existing_film = self.session.query(Films).filter_by(titre=item['titre'], annee=item['annee']).first()
-        if existing_film is not None :
-            film=existing_film
-        else : 
-            film=Films(titre=item['titre'], scorepresse = item['scorepresse'], scorespectateurs = item['scorespectateurs'], annee = item['annee'], duree = item['duree'], description = item['description'], boxofficefr = item['boxofficefr'])
-            self.session.add(film)
 
 
 class DatabasePipelineSeries :
@@ -319,30 +299,30 @@ class DatabasePipelineSeries :
             self.session.commit()
 
        #table realisateurs
-        if isinstance(item['realisateur'], list): # vérifier que l'élement est une liste
-            for scrap_realisateur in item['realisateur']: #savoir si dans la liste de real scrappée
+        if isinstance(item['realisateurs'], list): # vérifier que l'élement est une liste
+            for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
                 existing_real = self.session.query(Realisateurs).filter_by(realisateurs=scrap_realisateur).first() #le réalisateur existe dans cette liste
                 if existing_real : #s'il existe dans la base
                     realisateurs=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
                 else : 
                     realisateurs=Realisateurs(realisateurs=scrap_realisateur) #on le récupère en l'instanciant
-                    self.session.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                    self.session.add(realisateurs) #on l'ajoute pour le commit ensuite (ci dessous)
                     self.session.commit()
                 #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
-                realisateurslinkseries=RealisateursLinkSeries(id_series=series.id, id_realisateurs_realisateur.id)
+                realisateurslinkseries=RealisateursLinkSeries(id_series=series.id, id_realisateurs=realisateurs.id)
                 self.session.add(realisateurslinkseries)
                 self.session.commit() 
         else:
-            scrap_realisateur=item['realisateur']
-            existing_real = self.session.query(Realisateurs).filter_by(realisateur=scrap_realisateur).first() #on teste si l'acteur existe en base
+            scrap_realisateur=item['realisateurs']
+            existing_real = self.session.query(Realisateurs).filter_by(realisateurs=scrap_realisateur).first() #on teste si l'acteur existe en base
             if existing_real : #s'il existe
-                realisateur=existing_real #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+                realisateurs=existing_real #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
             else : #s'il n'existe pas
-                realisateur=Realisateurs(realisateur=scrap_realisateur) #on le récupère en l'instanciant
-                self.session.add(realisateur) #on l'ajoute pour le commit ensuite (ci dessous)
+                realisateurs=Realisateurs(realisateurs=scrap_realisateur) #on le récupère en l'instanciant
+                self.session.add(realisateurs) #on l'ajoute pour le commit ensuite (ci dessous)
                 self.session.commit()
             #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
-            realisateurslinkseries=RealisateursLinkSeries(id_serie=serie.id, id_realisateur=realisateur.id)
+            realisateurslinkseries=RealisateursLinkSeries(id_serie=series.id, id_realisateur=realisateurs.id)
             self.session.add(realisateurslinkseries)
             self.session.commit()
 
@@ -358,17 +338,17 @@ class DatabasePipelineSeries :
                     self.session.add(acteur) #ajouter l'acteur à la session
                     self.session.commit() #commiter la session
             #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
-                acteurslinkseries=ActeursLinkSeries(serie.id, acteur.id)
+                acteurslinkseries=ActeursLinkSeries(series.id, acteur.id)
                 self.session.add(acteurslinkseries)
                 self.session.commit()
         else:
             scrap_acteur=item['acteurs']
-            existing_act = self.session.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+            existing_act = self.session.query(Acteurs).filter_by(acteurs=scrap_acteur).first() #on teste si l'acteur existe en base
             if existing_act : #s'il existe
-                acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+                acteurs=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
             else : #s'il n'existe pas
-                acteur=Acteurs(acteur=item['acteurs'])
-                self.session.add(acteur)
+                acteur=Acteurs(acteurs=item['acteurs'])
+                self.session.add(acteurs)
                 self.session.commit()
             #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
             acteurslinkseries=ActeursLinkSeries(id_serie = series.id, id_acteur = acteurs.id)
@@ -386,11 +366,12 @@ class DatabasePipelineSeries :
                     self.session.add(pays) #ajouter le pays à la session
                     self.session.commit() #commiter la session
                 #table acteurslinkfilms (le faire pour chaque pays quand il y en a plusieurs par serie)
-                payslinkseries=PaysLinkSeries(serie.id, pays.id)
+                payslinkseries=PaysLinkSeries(id_serie = series.id, id_pays=pays.id)
                 self.session.add(payslinkseries)
                 self.session.commit()
         else:
             existing_pays = self.session.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
+            scrap_pays=item['pays']
             if existing_pays : #s'il existe
                 pays=existing_pays
             else:
@@ -398,7 +379,7 @@ class DatabasePipelineSeries :
                 self.session.add(pays)
                 self.session.commit()
             #table acteurslinkseries (le faire pour chaque pays quand il y en a plusieurs par serie)
-            payslinkseries=PaysLinkSeries(serie.id, pays.id)
+            payslinkseries=PaysLinkSeries(id_serie = series.id, id_pays=pays.id)
             self.session.add(payslinkseries)
             self.session.commit()
 
@@ -413,10 +394,11 @@ class DatabasePipelineSeries :
                     self.session.add(genre) #ajouter le genre à la session
                     self.session.commit() #commiter la session
             #table genrelinkfilms (le faire pour chaque genre quand il y en a plusieurs par serie)
-            genrelinkseries=GenreLinkSeries(serie.id, genre.id)
+            genrelinkseries=GenreLinkSeries(id_serie = series.id, id_genre = genre.id)
             self.session.add(genrelinkseries)
             self.session.commit()
         else:
+            scrap_genre = item['genre']
             existing_genre = self.session.query(Genre).filter_by(genre=scrap_genre).first() #on teste si le genre existe en base
             if existing_genre : #s'il existe
                 genre=existing_genre
@@ -425,15 +407,14 @@ class DatabasePipelineSeries :
                 self.session.add(genre) #ajouter le genre à la session
                 self.session.commit() #commiter la session
             #table genrelinkseries (le faire pour chaque genre quand il y en a plusieurs par serie)
-            genrelinkseries=GenreLinkSeries(serie.id, genre.id)
+            genrelinkseries=GenreLinkSeries(id_serie = series.id, id_genre = genre.id)
             self.session.add(genrelinkseries)
             self.session.commit()
 
     
     def close_spider(self, spider):
         # Fermer la connexion à la base de données
-        self.connection.commit()
-        self.connection.close()
+        self.session.close()
 
     
 class BookscraperPipelineSeries:
@@ -544,25 +525,19 @@ class BookscraperPipelineSeries:
         def cleaned_scorespectateurs(self, item) : 
             adapter = ItemAdapter(item)
             scorespectateurs_raw = adapter.get('scorespectateurs')
-            if scorespectateurs_raw is None:
+            if scorespectateurs_raw is not None:
+                scorespectateurs_cleaned = scorespectateurs_raw.replace(",",".")
+            else : 
                 scorespectateurs_cleaned = None
-            else :
-                if isinstance(scorespectateurs_raw, float):
-                    scorespectateurs_cleaned = scorespectateurs_raw.strip().replace(",",".")
-                else : 
-                    scorespectateurs_cleaned = None
             adapter['scorespectateurs'] = scorespectateurs_cleaned
             return item
         
         def cleaned_scorepresse(self, item) : 
             adapter = ItemAdapter(item)
             scorepresse_raw = adapter.get('scorepresse')
-            if scorepresse_raw is None:
+            if scorepresse_raw is not None:
+                scorepresse_cleaned = scorepresse_raw.replace(",",".")
+            else : 
                 scorepresse_cleaned = None
-            else :
-                if isinstance(scorepresse_raw, float):
-                    scorepresse_cleaned = scorepresse_raw.strip().replace(",",".")
-                else : 
-                    scorepresse_cleaned = None
             adapter['scorepresse'] = scorepresse_cleaned
             return item  
