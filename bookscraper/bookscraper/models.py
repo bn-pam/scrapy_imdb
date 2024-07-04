@@ -13,13 +13,13 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 class Films(Base):
     __tablename__ = 'films'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    titre = Column(String, nullable=False)
-    scorepresse = Column(Float)
-    scorespectateurs = Column(Float)
-    annee = Column(String, nullable=False) 
-    duree = Column(Integer, nullable=False)
-    description = Column(String, nullable=False)
-    boxofficefr = Column(Integer, nullable=False)
+    titre = Column(String, nullable=True)
+    scorepresse = Column(Float, nullable=True)
+    scorespectateurs = Column(Float, nullable=True)
+    annee = Column(String, nullable=True) 
+    duree = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
+    boxofficefr = Column(Integer, nullable=True)
 
     #### relations films
     # realisateur_links = relationship('RealisateursLinkFilms', back_populates='films')
@@ -37,14 +37,14 @@ class Films(Base):
 class Series(Base):
     __tablename__ = 'series'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    titre = Column(String, unique=True, nullable=False)
-    scorepresse = Column(Float)
-    scorespectateurs = Column(Float)
-    annee = Column(String, nullable=False) 
-    duree = Column(Integer, nullable=False)
-    description = Column(String, nullable=False)
-    saisons = Column(Integer, nullable=False)
-    episodes = Column(Integer, nullable=False)
+    titre = Column(String, unique=True, nullable=True)
+    scorepresse = Column(Float, nullable=True)
+    scorespectateurs = Column(Float, nullable=True)
+    annee = Column(String, nullable=True) 
+    duree = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
+    saisons = Column(Integer, nullable=True)
+    episodes = Column(Integer, nullable=True)
 
     #### relations series
     # realisateur_links = relationship('RealisateursLinkSeries', back_populates='series')
