@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 
 # load_dotenv()
 # Définir la connexion à la base de données
-# DATABASE_URL = os.getenv("DATABASE_URL") 
+DATABASE_URL = os.getenv("DATABASE_URL") 
 
 # Créer une instance du moteur SQLAlchemy
 engine = create_engine(DATABASE_URL)
