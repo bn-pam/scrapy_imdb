@@ -299,8 +299,8 @@ class DatabasePipelineSeries :
             self.session.commit()
 
        #table realisateurs
-        if isinstance(item['realisateurs'], list): # vérifier que l'élement est une liste
-            for scrap_realisateur in item['realisateurs']: #savoir si dans la liste de real scrappée
+        if isinstance(item['realisateur'], list): # vérifier que l'élement est une liste
+            for scrap_realisateur in item['realisateur']: #savoir si dans la liste de real scrappée
                 existing_real = self.session.query(Realisateurs).filter_by(realisateurs=scrap_realisateur).first() #le réalisateur existe dans cette liste
                 if existing_real : #s'il existe dans la base
                     realisateurs=existing_real #on le récupère juste (pour pouvoir l'associer ensuite) mais on le commit pas
@@ -309,11 +309,11 @@ class DatabasePipelineSeries :
                     self.session.add(realisateurs) #on l'ajoute pour le commit ensuite (ci dessous)
                     self.session.commit()
                 #table realisateurslinkfilms (le faire pour chaque real quand yen a plusieurs par serie)
-                realisateurslinkseries=RealisateursLinkSeries(id_series=series.id, id_realisateurs=realisateurs.id)
+                realisateurslinkseries=RealisateursLinkSeries(id_serie=series.id, id_realisateurs=realisateurs.id)
                 self.session.add(realisateurslinkseries)
                 self.session.commit() 
         else:
-            scrap_realisateur=item['realisateurs']
+            scrap_realisateur=item['realisateur']
             existing_real = self.session.query(Realisateurs).filter_by(realisateurs=scrap_realisateur).first() #on teste si l'acteur existe en base
             if existing_real : #s'il existe
                 realisateurs=existing_real #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
@@ -330,15 +330,15 @@ class DatabasePipelineSeries :
         #table acteurs
         if isinstance(item['acteurs'], list): # vérifier que l'élement est une liste
             for scrap_acteur in item['acteurs']: #pour chaque élément de la liste acteurs résultant du scrapping
-                existing_act = self.session.query(Acteurs).filter_by(acteur=scrap_acteur).first() #on teste si l'acteur existe en base
+                existing_act = self.session.query(Acteurs).filter_by(acteurs=scrap_acteur).first() #on teste si l'acteur existe en base
                 if existing_act : #s'il existe
-                    acteur=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
+                    acteurs=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
                 else : #s'il n'existe pas
-                    acteur=Acteurs(acteur=scrap_acteur) #on le stocke en base dans la table acteurs
-                    self.session.add(acteur) #ajouter l'acteur à la session
+                    acteurs=Acteurs(acteurs=scrap_acteur) #on le stocke en base dans la table acteurs
+                    self.session.add(acteurs) #ajouter l'acteur à la session
                     self.session.commit() #commiter la session
             #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
-                acteurslinkseries=ActeursLinkSeries(series.id, acteur.id)
+                acteurslinkseries=ActeursLinkSeries(id_serie=series.id, id_acteur=acteurs.id)
                 self.session.add(acteurslinkseries)
                 self.session.commit()
         else:
@@ -347,11 +347,11 @@ class DatabasePipelineSeries :
             if existing_act : #s'il existe
                 acteurs=existing_act #on le stocke dans une variable pour pouvoir le réutiliser dans notre code
             else : #s'il n'existe pas
-                acteur=Acteurs(acteurs=item['acteurs'])
+                acteurs=Acteurs(acteurs=item['acteurs'])
                 self.session.add(acteurs)
                 self.session.commit()
             #table acteurslinkfilms (le faire pour chaque acteur quand yen a plusieurs par serie)
-            acteurslinkseries=ActeursLinkSeries(id_serie = series.id, id_acteur = acteurs.id)
+            acteurslinkseries=ActeursLinkSeries(id_serie=series.id, id_acteur=acteurs.id)
             self.session.add(acteurslinkseries)
             self.session.commit()
 
@@ -370,8 +370,8 @@ class DatabasePipelineSeries :
                 self.session.add(payslinkseries)
                 self.session.commit()
         else:
-            existing_pays = self.session.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
             scrap_pays=item['pays']
+            existing_pays = self.session.query(Pays).filter_by(pays=scrap_pays).first() #on teste si le pays existe en base
             if existing_pays : #s'il existe
                 pays=existing_pays
             else:

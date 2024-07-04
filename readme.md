@@ -1,3 +1,62 @@
+
+#####################################################################################################
+###############################                                       ###############################
+###############################         ALLOCINE.com SCRAPPER         ###############################
+###############################            movies & series            ###############################
+###############################                  v2                   ###############################
+#####################################################################################################
+
+################ Before get started ##############
+
+####### database, flexible server, RG and factory creation on Azure ######
+> create a DDBB on Azure thanks to the script RG azure
+> get on the "script_RG_azure" repository with cmd:
+cd script_RG_azure
+> then execute the script
+./creation_RG.sh
+> create a DB online in your flexible server (named scrapy_imdb)
+
+####### install virtual environment on you computer ######
+> I recommend you to install poetry environnement on your computer
+> Then get on the first "bookscrapper" repository with cmd:
+cd bookscraper
+
+######### FILMS #########
+launch spider with cmd  :
+scrapy crawl bookspider
+
+This will populate a films table on azure
+
+######### SERIES #########
+launch spider with cmd  :
+scrapy crawl seriespider
+
+This will populate a series table on azure
+
+###############################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #####################################################################################################
 ###############################                                       ###############################
 ###############################         ALLOCINE.com SCRAPPER         ###############################

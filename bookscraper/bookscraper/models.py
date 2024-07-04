@@ -107,7 +107,7 @@ class ActeursLinkFilms(Base):
 class ActeursLinkSeries(Base):
     __tablename__ = 'acteurslinkseries'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    id_film = Column(Integer, ForeignKey('series.id'), autoincrement=True)
+    id_serie = Column(Integer, ForeignKey('series.id'), autoincrement=True)
     id_acteur = Column(Integer, ForeignKey('acteurs.id'), autoincrement=True)
     # series = relationship('Series', back_populates='acteur_links')
     # acteurs = relationship('Acteurs', back_populates='film_links')

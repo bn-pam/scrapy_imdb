@@ -26,10 +26,10 @@ class SeriespiderSpider(scrapy.Spider):
         yield response.follow(next_page, callback=self.parse)
 
         ########## print pour montrer les logs
-        print("--------------------------------------------")
-        print("--------------------------------------------\n")
-        print(self.i)
-        print(next_page)
+        # print("--------------------------------------------")
+        # print("--------------------------------------------\n")
+        # print(self.i)
+        # print(next_page)
 
 
     def parse_item(self, response):
