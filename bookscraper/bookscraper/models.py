@@ -62,7 +62,7 @@ class Series(Base):
 class Realisateurs(Base):
     __tablename__ = 'realisateurs'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    realisateurs = Column(String, nullable=False)
+    realisateurs = Column(String, nullable=True)
     # film_links = relationship('RealisateursLinkFilms', back_populates='realisateurs')
     # serie_links = relationship('RealisateursLinkSeries', back_populates='realisateurs')
     films = relationship('Films', secondary='realisateurslinkfilms', back_populates='realisateurs')
@@ -88,7 +88,7 @@ class RealisateursLinkSeries(Base):
 class Acteurs(Base):
     __tablename__ = 'acteurs'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    acteurs = Column(String, nullable=False)
+    acteurs = Column(String, nullable=True)
     # film_links = relationship('ActeursLinkFilms', back_populates='acteurs')
     # serie_links = relationship('ActeursLinkSeries', back_populates='acteurs')
     films = relationship('Films', secondary='acteurslinkfilms', back_populates='acteurs')
@@ -116,7 +116,7 @@ class ActeursLinkSeries(Base):
 class Genre(Base):
     __tablename__ = 'genre'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    genre = Column(String, nullable=False)
+    genre = Column(String, nullable=True)
     # film_links = relationship('GenreLinkFilms', back_populates='genres')
     # serie_links = relationship('GenreLinkSeries', back_populates='genres')
     films = relationship('Films', secondary='genrelinkfilms', back_populates='genres')
@@ -144,7 +144,7 @@ class GenreLinkSeries(Base):
 class Pays(Base):
     __tablename__ = 'pays'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pays = Column(String, nullable=False)
+    pays = Column(String, nullable=True)
     # film_links = relationship('PaysLinkFilms', back_populates='pays')
     # serie_links = relationship('PaysLinkSeries', back_populates='pays')
     films = relationship('Films', secondary='payslinkfilms', back_populates='pays')
